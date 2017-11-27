@@ -24,12 +24,15 @@ public class MainFX extends Application {
 
     public void youtubeSearch(Pane root, Stage stage) {
         ExecutorService pool = Executors.newFixedThreadPool(4);
+        Pane youPane = new Pane();
+        youPane.setTranslateY(150);
         Button btnSearch = new Button("Search");
         btnSearch.setTranslateX(200);
         btnSearch.setTranslateY(10);
         TextField youTubeChannel = new TextField("UCmSwqv2aPbuOGiuii2TeaLQ");
         youTubeChannel.setTranslateX(10);
         youTubeChannel.setTranslateY(10);
+        youPane.getChildren().addAll(btnSearch);
 
         btnSearch.setOnAction(event -> {
             root.getChildren().clear();
@@ -52,9 +55,8 @@ public class MainFX extends Application {
                     videoPublishDate.setTranslateX(videoName.getLayoutBounds().getWidth() + 50);
                     videoPublishDate.setTranslateY(160);
                     WebView webview = new WebView();
-                    System.out.println("https://www.youtube.com/watch?v=" + body.items.get(0).contentDetails.upload.videoID);
-                    webview.getEngine().load(
-                            "https://www.youtube.com/watch?v=" + body.items.get(0).contentDetails.upload.videoID                    );
+                    /*System.out.println("https://www.youtube.com/watch?v=" + body.items.get(0).contentDetails.upload.videoID);
+                    webview.getEngine().load("https://www.youtube.com/watch?v=" + body.items.get(0).contentDetails.upload.videoID);
                     webview.setPrefSize(640, 390);
                     Scene videoScene = new Scene(webview);
                     Stage stage1 = new Stage();
@@ -65,8 +67,8 @@ public class MainFX extends Application {
                     mediaPlayer.play();
                     MediaView mediaView = new MediaView(mediaPlayer);
 
-
-                    root.getChildren().addAll(videoName, channelName, videoPublishDate, mediaView);
+*/
+                    root.getChildren().addAll(videoName, channelName, videoPublishDate);
 
                     System.out.println(body.items.get(0).snippet.channelId);
                     System.out.println("published at" + body.items.get(0).snippet.publishedAt);
@@ -78,7 +80,7 @@ public class MainFX extends Application {
         });
 
 
-        root.getChildren().addAll(btnSearch, youTubeChannel);
+        root.getChildren().addAll(btnSearch, youTubeChannel, youPane);
 
     }
 
@@ -93,7 +95,7 @@ public class MainFX extends Application {
         primaryStage.setScene(scene);
         primaryStage.setTitle("Youtube channel info");
         Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
-        primaryStage.setHeight(dimension.height - 50);
+        primaryStage.setHeight(dimension.height - 100);
         primaryStage.setWidth(dimension.width);
         primaryStage.show();
         //      root.getChildren().addAll(youtubeRoot);
