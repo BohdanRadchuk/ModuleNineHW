@@ -2,6 +2,7 @@ import com.mashape.unirest.http.HttpResponse;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
@@ -13,6 +14,7 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import objectsStructure.Items;
 import objectsStructure.YouTubeMainResponse;
+
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
@@ -23,7 +25,7 @@ public class MainFX extends Application {
     private static final int WINDOW_WIDTH = 1350;
     Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
 
-    private static final int VERTICAL_OFFSET = 50;
+    private static final int OFFSET = 50;
 
     public static void main(String[] args) {
         launch(args);
@@ -31,19 +33,19 @@ public class MainFX extends Application {
 
     public void youtubeSearch(Pane root) {
         ExecutorService pool = Executors.newFixedThreadPool(4);
-        int maxResults = 10;
+        int maxResults = 25;                                                //кол-во запросов
         Pane youPane = new Pane();
-        youPane.setPrefWidth(dimension.width - 50);
-        youPane.setPrefHeight(200*maxResults + VERTICAL_OFFSET);
+        youPane.setPrefWidth(dimension.width - OFFSET);
+        youPane.setPrefHeight(180 * maxResults + OFFSET);
         ScrollPane scrollPane = new ScrollPane(youPane);
         scrollPane.setTranslateX(0);
-        scrollPane.setTranslateY(VERTICAL_OFFSET);
+        scrollPane.setTranslateY(OFFSET);
         scrollPane.setPannable(true);
-        scrollPane.setPrefSize(WINDOW_WIDTH, WINDOW_HEIGHT - VERTICAL_OFFSET);
+        scrollPane.setPrefSize(WINDOW_WIDTH, WINDOW_HEIGHT - OFFSET);
 
         // авто обновление размеров для scrollPane при ресайзе окна
         root.heightProperty().addListener((arg0, arg1, arg2) -> {
-            scrollPane.setPrefHeight(arg2.doubleValue() - VERTICAL_OFFSET);
+            scrollPane.setPrefHeight(arg2.doubleValue() - OFFSET);
         });
         root.widthProperty().addListener((arg0, arg1, arg2) -> {
             scrollPane.setPrefWidth(arg2.doubleValue());
@@ -51,7 +53,7 @@ public class MainFX extends Application {
         Button btnSearch = new Button("Search");
         btnSearch.setTranslateX(200);
         btnSearch.setTranslateY(10);
-        String channelSearch = "UCmSwqv2aPbuOGiuii2TeaLQ";
+        String channelSearch = "UCilV44nrGb-2FKvogc9bI9A";                              //тут указываем дефолтное значение в поле для поиска каналов
 
         TextField youTubeChannel = new TextField(channelSearch);
         youTubeChannel.setTranslateX(10);
@@ -59,18 +61,16 @@ public class MainFX extends Application {
         youPane.getChildren().addAll(btnSearch);
 
         btnSearch.setOnAction(event -> {
-           /* root.getChildren().clear();
-            root.getChildren().addAll(btnSearch, youTubeChannel);
-           */
+
             youPane.getChildren().clear();
-           pool.submit(() -> {
-               //
+            pool.submit(() -> {
+
                 HttpResponse<YouTubeMainResponse> response = YouTubeApi.youTubeApiWork(youTubeChannel.getText(), maxResults);
                 System.out.println("response Code " + response.getStatus());
                 YouTubeMainResponse body = response.getBody();
-               ArrayList <Button> btnPlay = new ArrayList<>();
+                ArrayList<Button> btnPlay = new ArrayList<>();
 
-                for (int i = 0; i <body.items.size(); i++) {
+                for (int i = 0; i < body.items.size(); i++) {
                     btnPlay.add(new Button("View"));
                     Items item = body.items.get(i);
                     int finalI = i;
@@ -78,8 +78,8 @@ public class MainFX extends Application {
                     Platform.runLater(() -> {
 
                         Image image = new Image(item.snippet.thumbnails.medium.url);
-                        double translateY = image.getHeight()* finalI;
-                        double translateX = image.getWidth() + 50;
+                        double translateY = image.getHeight() * finalI;                                 //сдвигаем на высоту картинки
+                        double translateX = image.getWidth() + OFFSET;
                         System.out.println();
                         ImageView imageView = new ImageView(image);
                         imageView.setTranslateX(10);
@@ -87,103 +87,68 @@ public class MainFX extends Application {
 
                         Text channelName = new Text("Channel name: " + item.snippet.channelTitle);
                         channelName.setTranslateX(translateX);
-                        channelName.setTranslateY(translateY +40);
+                        channelName.setTranslateY(translateY + OFFSET);
 
                         Text videoName = new Text("video name: " + '"' + item.snippet.title + '"');
                         videoName.setTranslateX(translateX);
                         videoName.setTranslateY(translateY + 80);
 
                         Text videoPublishDate = new Text("video published at " + item.snippet.publishedAt);
-                        videoPublishDate.setTranslateX(translateX + videoName.getLayoutBounds().getWidth() + 50);
+                        videoPublishDate.setTranslateX(translateX + videoName.getLayoutBounds().getWidth() + OFFSET);
                         videoPublishDate.setTranslateY(translateY + 80);
 
-
-                        btnPlay.get(finalI).setTranslateX(800);
-                        btnPlay.get(finalI).setTranslateY(translateY);
+                        btnPlay.get(finalI).setTranslateX(translateX + channelName.getLayoutBounds().getWidth() + 10);
+                        btnPlay.get(finalI).setTranslateY(translateY + 35);
                         youPane.getChildren().addAll(btnPlay.get(finalI));
 
-                        for (Button btn:btnPlay
-                             ) {
-                            btnPlay.get(finalI).setOnAction(event1 -> {
-                                String youWatch = "https://www.youtube.com/watch?v=";
-                                //WebView webView = myWebView(item); // categories.indexOf(category)
-                                int  inda  = btnPlay.indexOf(btnPlay.get(finalI));
-                                System.out.println(inda);
+                        btnPlay.get(finalI).setOnAction(event1 -> {
+                            int inda = btnPlay.indexOf(btnPlay.get(finalI));
+                            Items btnitem = body.items.get(inda);
 
+                            //checking for upload activity type (можно было сделать воспроизведение и из другого типа активности, но я так понял что их может быть много разных,
+                            //  а играть видео по умолчанию должны с 1 типа - загрузки файла на ютуб, как пример UCmSwqv2aPbuOGiuii2TeaLQ канал - там каждая вторая активность это
+                            // "bulletin", есть каналы в которых по три активности на 1 видео. для этого и выдаётся ошибка воспроизвидения)
+                            if (!btnitem.snippet.type.equals("upload")) {
+                                Alert alert = new Alert(Alert.AlertType.ERROR);
 
-                                WebView webview = new WebView();
-//                            System.out.println( youWatch + body.items.get(0).contentDetails.upload.videoId);
-                                webview.getEngine().load(youWatch + body.items.get(inda).contentDetails.upload.videoId);
-                                webview.setPrefSize(640, 390);
-                                webview.setTranslateX(850);
-                                webview.setTranslateY(100);
-                                youPane.getChildren().addAll(webview);
+                                alert.setTitle("ERROR");
+                                alert.setHeaderText("Not a video upload activity type");
+                                alert.showAndWait();
+                            } else myWebView(btnitem, youPane);
+                        });
 
-                            });
-
-
-                        }
-
-
-
-                        /*WebView webview = new WebView();
-                        System.out.println("https://www.youtube.com/watch?v=" + item.contentDetails.upload.videoId);
-                        webview.getEngine().load("https://www.youtube.com/watch?v=" + item.contentDetails.upload.videoId);
-                        webview.setPrefSize(640, 390);
-                        webview.setTranslateX(400);
-                        webview.setTranslateY(200);*/
-                   /* Scene videoScene = new Scene(webview);
-                    Stage stage1 = new Stage();
-                    stage.setScene(videoScene);
-                    stage.show();*/
-                    /*Media media = new Media("https://www.youtube.com/watch?v=" + body.items.get(0).contentDetails.upload.videoId);
-                    MediaPlayer mediaPlayer = new MediaPlayer(media);
-                    mediaPlayer.play();
-                    MediaView mediaView = new MediaView(mediaPlayer);
-
-*/
                         youPane.getChildren().addAll(videoName, channelName, videoPublishDate, imageView);
 
-                        System.out.println(item.snippet.channelId);
+                        /*System.out.println(item.snippet.channelId);
                         System.out.println("published at" + item.snippet.publishedAt);
                         System.out.println("sniped title " + item.snippet.title);
-                        System.out.println("channel title " + item.snippet.channelTitle);
+                        System.out.println("channel title " + item.snippet.channelTitle);*/
                     });
                 }
             });
-
         });
-
-
         root.getChildren().addAll(btnSearch, youTubeChannel, youPane, scrollPane);
-
     }
 
-    public WebView myWebView (Items item){
+    public void myWebView(Items item, Pane youPane) {                               //воспроизведение видео с помощью WebView
+        String youWatch = "https://www.youtube.com/watch?v=";
         WebView webview = new WebView();
-        System.out.println("https://www.youtube.com/watch?v=" + item.contentDetails.upload.videoId);
-        webview.getEngine().load("https://www.youtube.com/watch?v=" + item.contentDetails.upload.videoId);
+        webview.getEngine().load(youWatch + item.contentDetails.upload.videoId);
         webview.setPrefSize(640, 390);
-        webview.setTranslateX(400);
-        webview.setTranslateY(50);
-        return webview;
+        webview.setTranslateX(750);
+        webview.setTranslateY(100);
+        youPane.getChildren().addAll(webview);
     }
-
 
     @Override
     public void start(Stage primaryStage) {
         Pane root = new Pane();
-        /*Pane youtubeRoot = new Pane();
-        youtubeRoot.setTranslateY(100);
-*/
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Youtube channel info");
-
-            primaryStage.setHeight(dimension.height - 100);
+        primaryStage.setHeight(dimension.height - 100);
         primaryStage.setWidth(dimension.width);
         primaryStage.show();
-        //      root.getChildren().addAll(youtubeRoot);
         youtubeSearch(root);
 
     }

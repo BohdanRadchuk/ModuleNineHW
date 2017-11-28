@@ -43,6 +43,7 @@ public class YouTubeApi {
                     .queryString("channelId", channelID)
                     .queryString("maxResults", maxResults)
                     .queryString("part", "snippet,contentDetails")
+                    //.queryString("snippet.type","upload")            -- пытался сделать что бы ютуб возвращал только активности у которых тип = аплоад
                     .queryString("key", MY_API_KEY)
                     .asObject(YouTubeMainResponse.class);
         } catch (UnirestException e) {
@@ -50,7 +51,8 @@ public class YouTubeApi {
         }
         return null;
     }
-    public static HttpResponse<YouTubeMainResponse> youTubeApiWork(String channelID){
+
+    public static HttpResponse<YouTubeMainResponse> youTubeApiWork(String channelID) {
         return youTubeApiWork(channelID, 1);
     }
 }

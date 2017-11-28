@@ -8,5 +8,6 @@ public class Snippet {
     public String channelId;
     public String title;
     public String channelTitle;
+    public String type;
     public Thumbnails thumbnails;
 }
