@@ -21,6 +21,7 @@ import java.util.concurrent.Executors;
 public class MainFX extends Application {
     private static final int WINDOW_HEIGHT = 900;
     private static final int WINDOW_WIDTH = 1350;
+    Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
 
     private static final int VERTICAL_OFFSET = 50;
 
@@ -28,9 +29,12 @@ public class MainFX extends Application {
         launch(args);
     }
 
-    public void youtubeSearch(Pane root, Stage stage) {
+    public void youtubeSearch(Pane root) {
         ExecutorService pool = Executors.newFixedThreadPool(4);
+        int maxResults = 10;
         Pane youPane = new Pane();
+        youPane.setPrefWidth(dimension.width - 50);
+        youPane.setPrefHeight(200*maxResults + VERTICAL_OFFSET);
         ScrollPane scrollPane = new ScrollPane(youPane);
         scrollPane.setTranslateX(0);
         scrollPane.setTranslateY(VERTICAL_OFFSET);
@@ -44,13 +48,11 @@ public class MainFX extends Application {
         root.widthProperty().addListener((arg0, arg1, arg2) -> {
             scrollPane.setPrefWidth(arg2.doubleValue());
         });
-        youPane.setPrefHeight(180*10);
-        //youPane.setTranslateY(150);
         Button btnSearch = new Button("Search");
         btnSearch.setTranslateX(200);
         btnSearch.setTranslateY(10);
         String channelSearch = "UCmSwqv2aPbuOGiuii2TeaLQ";
-        channelSearch = "UCIupfj3rki6dfjQqFKbXzMA";
+
         TextField youTubeChannel = new TextField(channelSearch);
         youTubeChannel.setTranslateX(10);
         youTubeChannel.setTranslateY(10);
@@ -60,9 +62,10 @@ public class MainFX extends Application {
            /* root.getChildren().clear();
             root.getChildren().addAll(btnSearch, youTubeChannel);
            */
+            youPane.getChildren().clear();
            pool.submit(() -> {
-               //youPane.getChildren().clear();
-                HttpResponse<YouTubeMainResponse> response = YouTubeApi.youTubeApiWork(youTubeChannel.getText(), 10);
+               //
+                HttpResponse<YouTubeMainResponse> response = YouTubeApi.youTubeApiWork(youTubeChannel.getText(), maxResults);
                 System.out.println("response Code " + response.getStatus());
                 YouTubeMainResponse body = response.getBody();
                ArrayList <Button> btnPlay = new ArrayList<>();
@@ -76,34 +79,50 @@ public class MainFX extends Application {
 
                         Image image = new Image(item.snippet.thumbnails.medium.url);
                         double translateY = image.getHeight()* finalI;
-                        double trnaslateX = image.getWidth() + 50;
+                        double translateX = image.getWidth() + 50;
                         System.out.println();
                         ImageView imageView = new ImageView(image);
                         imageView.setTranslateX(10);
                         imageView.setTranslateY(translateY);
 
                         Text channelName = new Text("Channel name: " + item.snippet.channelTitle);
-                        channelName.setTranslateX(trnaslateX);
+                        channelName.setTranslateX(translateX);
                         channelName.setTranslateY(translateY +40);
 
                         Text videoName = new Text("video name: " + '"' + item.snippet.title + '"');
-                        videoName.setTranslateX(trnaslateX);
+                        videoName.setTranslateX(translateX);
                         videoName.setTranslateY(translateY + 80);
 
                         Text videoPublishDate = new Text("video published at " + item.snippet.publishedAt);
-                        videoPublishDate.setTranslateX(trnaslateX + videoName.getLayoutBounds().getWidth() + 50);
+                        videoPublishDate.setTranslateX(translateX + videoName.getLayoutBounds().getWidth() + 50);
                         videoPublishDate.setTranslateY(translateY + 80);
 
 
                         btnPlay.get(finalI).setTranslateX(800);
                         btnPlay.get(finalI).setTranslateY(translateY);
                         youPane.getChildren().addAll(btnPlay.get(finalI));
-                        btnPlay.get(finalI).setOnAction(event1 -> {
-                            WebView webView = myWebView(item); // categories.indexOf(category)
 
-                            youPane.getChildren().addAll(webView);
+                        for (Button btn:btnPlay
+                             ) {
+                            btnPlay.get(finalI).setOnAction(event1 -> {
+                                String youWatch = "https://www.youtube.com/watch?v=";
+                                //WebView webView = myWebView(item); // categories.indexOf(category)
+                                int  inda  = btnPlay.indexOf(btnPlay.get(finalI));
+                                System.out.println(inda);
 
-                        });
+
+                                WebView webview = new WebView();
+//                            System.out.println( youWatch + body.items.get(0).contentDetails.upload.videoId);
+                                webview.getEngine().load(youWatch + body.items.get(inda).contentDetails.upload.videoId);
+                                webview.setPrefSize(640, 390);
+                                webview.setTranslateX(850);
+                                webview.setTranslateY(100);
+                                youPane.getChildren().addAll(webview);
+
+                            });
+
+
+                        }
 
 
 
@@ -160,12 +179,12 @@ public class MainFX extends Application {
         Scene scene = new Scene(root);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Youtube channel info");
-        Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
+
             primaryStage.setHeight(dimension.height - 100);
         primaryStage.setWidth(dimension.width);
         primaryStage.show();
         //      root.getChildren().addAll(youtubeRoot);
-        youtubeSearch(root, primaryStage);
+        youtubeSearch(root);
 
     }
 
